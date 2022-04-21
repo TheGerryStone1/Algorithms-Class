@@ -1,0 +1,1 @@
+cin >> nodes >> edges >> source;
