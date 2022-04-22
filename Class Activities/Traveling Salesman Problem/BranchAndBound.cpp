@@ -18,7 +18,7 @@ struct Node{
     }
 };
 
-void startMatrix(int arr[MAX][MAX])
+void rootMatrix(int arr[MAX][MAX])
 {
     for(int i = 0; i < MAX; i++)
     {
@@ -43,9 +43,75 @@ void readArcs(int arr[MAX][MAX], int m)
     }
 }
 
-void BranchAndBoundTSP(int arr[MAX][MAX], int n)
+void calcPossCost(Node actualNode, int arr[MAX][MAX], int n)
 {
+    actualNode.possibleCost = actualNode.accumCost;
+    int obtainedCost;
 
+    for(int i = 0; i <= n; i++)
+    {
+        obtainedCost = INT_MAX;
+
+        if(!actualNode.visited[i] || i == actualNode.actualVertex)
+        {
+            if(!actualNode.visited[i])
+            {
+                for(int j = 1; j <= n; j++)
+                {
+                    if (i != j && (!actualNode.visited[j] || j == 1)) obtainedCost = min(obtainedCost, arr[i][j]);
+                }
+            }
+
+            else
+            {
+                for(int j = 1; j <= n; j++)
+                {
+                    if(!actualNode.visited[j]) obtainedCost = min(obtainedCost, arr[i][j]);
+                }
+            }
+        }
+
+        actualNode.possibleCost += obtainedCost;
+    }
+}
+
+int BranchAndBoundTSP(int arr[MAX][MAX], int n)
+{
+    int optimalCost = INT_MAX;
+    Node root;
+    root.level = 0;
+    root.accumCost = 0;
+    root.possibleCost = 0;
+    root.actualVertex = 1;
+    root.previousVertex = 0;
+    root.visited[1] = true;
+    calcPossCost(root, arr, n);
+    priority_queue<Node> priorityQueue;
+    priorityQueue.push(root);
+
+    while(!priorityQueue.empty())
+    {
+        root = priorityQueue.top();
+        priorityQueue.pop();
+        
+        if(root.accumCost < optimalCost) optimalCost = root.accumCost;
+        if(root.possibleCost < optimalCost)
+        {
+            root.level++;
+            calcPossCost(root, arr, n);
+            
+            if(root.possibleCost < optimalCost) priorityQueue.push(root);
+
+            root.accumCost += arr[root.level].accumCost;
+
+            calcPossCost(root, arr, n);
+
+            if(root.possibleCost > optimalCost) priorityQueue.push(root);
+
+        }
+    }
+
+    return optimalCost;
 }
 
 int main()
@@ -55,7 +121,7 @@ int main()
     cin >> n >> m;
 
     int arr[MAX][MAX];
-    startMatrix(arr);
+    rootMatrix(arr);
     readArcs(arr, m);
     cout << BranchAndBoundTSP(arr, n) << endl;
 }
